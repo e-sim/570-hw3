@@ -45,11 +45,10 @@ def debugPrint(text):
 debugPrint("START PROGRAM")
 
 
-fsa_file = open(sys.argv[1], "r")
-#fsa_file = open("fsa1", "r")
+fst_file = open(sys.argv[1], "r")
 node_dict = {}
 
-for line in fsa_file:
+for line in fst_file:
 
 #regex for each line of fsa file
 	FSA_ACCEPT_REGEX_PATTERN = re.compile(r"([0-9]+)$")
