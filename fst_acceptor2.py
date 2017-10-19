@@ -53,8 +53,15 @@ class TrelSquare:
                 break
         return (prob, new_out)
 
+def find_max_prob(column, dest_node, curr_char):
+    for origin_sq in column:
+        (curr_prob, new_out) = origin_sq.find_prob(dest_node, curr_char)
+        if curr_prob > max_prob:
+            max_prob = curr_prob
+            max_owner = origin_sq.state
+            output = origin_sq.out_str + new_out
 
-
+    return (max_prob, max_owner, output)
 
 #### debug print
 DEBUGGING = False
@@ -119,7 +126,7 @@ infile = open(sys.argv[2], "r")
 
 for line in infile:
 
-	orig_line = line.strip("\n")
+	#orig_line = line.strip("\n")
 	line = line.translate(None, '" ')
     inputs = line.split()
     #length_line = len(line)
@@ -129,8 +136,8 @@ for line in infile:
     # makes an array of arrays named after the different states/nodes
     trellis = [i = [] for i in node_dict.keys()]
 
-    #first fill in the trellis 
-    # while weight != 0?? <-- goes somewhere
+    #probably should change char to word at some point
+    #probably also need to adjust format of output (should it be a list?)
 
     curr_node = node_dict.itervalues().next()
     curr_char = inputs[0]
@@ -144,9 +151,6 @@ for line in infile:
     #trelsquare has prob, prevnode, outstr, destnode, step
  
     # the edges all have inchar, next node, weight, outchar, + a name 
-    # so, for each adjacent edge that has the right character (each edge in legal moves)
-    # prob = max (prev prob * edge prob)
-    # ^^prev prob = look in array named for curr node, #step -1 (?), get [0] in tuple
     
     # go to the array named next node, #step cell
     # prev node = curr node
@@ -173,20 +177,21 @@ for line in infile:
 
             #loop through possible origin squares (prev column) to find max prob
             prev_col = [array[step-1] for array in trellis]
-            for origin_sq in prev_col:
-                (curr_prob, out) = origin_sq.find_prob(curr_node, curr_char)
-                if curr_prob > max_prob:
-                    max_prob = curr_prob
-                    max_owner = origin_sq.state
-                    old_out = origin_sq.out_str
-                    new_out = out
+            #for origin_sq in prev_col:
+            #    (curr_prob, out) = origin_sq.find_prob(curr_node, curr_char)
+            #    if curr_prob > max_prob:
+            #        max_prob = curr_prob
+            #        max_owner = origin_sq.state
+            #        old_out = origin_sq.out_str
+            #        new_out = out
+            (max_prob, max_owner, out_so_far) = find_max_prob(prev_col, curr_node, 
+            curr_char)
 
-            trellis[j][step] = TrelSquare(max_prob, max_owner, old_out + new_out,
+            trellis[j][step] = TrelSquare(max_prob, max_owner, out_so_far,
             curr_node, step)
             j += 1
 
         step += 1
-        
         
     #this executes when while condition becomes false    
     #else:
