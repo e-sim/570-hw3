@@ -12,26 +12,26 @@ import collections
 
 class Edge:
 
-    def __init__(self, char, dest, weight, output):
-        self.char = char
+    def __init__(self, in_word, dest, weight, output):
+        self.in_word = in_word
         self.dest = dest
         self.weight = weight
         self.output = output
 
 class Node:
 
-	def __init__(self, name):
-		self.name = name
-		self.adjacents = []
-		self.accept = False
+    def __init__(self, name):
+        self.name = name
+        self.adjacents = []
+        self.accept = False
 
-	#for testing
-	def __repr__(self):
-		return "name=" + self.name + " accept=" + str(self.accept)\
-				+ " (" + str(self.adjacents) + ")"
+    #for testing
+    def __repr__(self):
+        return "name=" + self.name + " accept=" + str(self.accept)\
+                + " (" + str(self.adjacents) + ")"
 
-	def set_accept(self):
-		self.accept = True
+    def set_accept(self):
+        self.accept = True
 
 class TrelSquare:
 
@@ -42,21 +42,24 @@ class TrelSquare:
         self.state = state_node
         self.step = step
 
-    def find_prob(self, dest_node, curr_char):
+    def find_prob(self, dest_node, curr_word):
         #the probability of going to the destination node/state from this one
         prob = 0
         new_out = ""
         for edge in self.state.adjacents:
-            if edge.dest is dest_node.name and edge.char is curr_char:
-                prob = self.prob * edge.weight
-                new_out = edge.output
-                break
+            if edge.dest is dest_node.name and edge.in_word is curr_word:
+                new_prob = self.prob * edge.weight
+                if new_prob > prob:
+                    new_out = edge.output
+                    prob = new_prob
+                    #should this be break?
+                    continue
         return (prob, new_out)
 
-def find_max_prob(column, dest_node, curr_char):
+def find_max_prob(column, dest_node, curr_word):
     max_prob = 0
     for origin_sq in column:
-        (curr_prob, new_out) = origin_sq.find_prob(dest_node, curr_char)
+        (curr_prob, new_out) = origin_sq.find_prob(dest_node, curr_word)
         if curr_prob > max_prob:
             max_prob = curr_prob
             max_owner = origin_sq.state
@@ -77,9 +80,9 @@ def find_final_prob(final_column):
 #### debug print
 DEBUGGING = False
 def debugPrint(text):
-	if (DEBUGGING):
-		print(text)
-		sys.stdout.flush()
+    if (DEBUGGING):
+        print(text)
+        sys.stdout.flush()
 
 #### main program starts
 
@@ -91,41 +94,41 @@ node_dict = collections.OrderedDict()
 
 for line in fst_file:
 
-    #regex for each line of fsa file
-	FSA_ACCEPT_REGEX_PATTERN = re.compile(r"(\w+)$")
-	FSA_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \
+    #regex for each line of fst file
+    FST_ACCEPT_REGEX_PATTERN = re.compile(r"(\w+)$")
+    FST_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \
         \"(\w*)\" \"(\w*)\" (\d(\.\d+)?)\)\)")
-	accept_match = FSA_ACCEPT_REGEX_PATTERN.match(line.strip())
+    accept_match = FST_ACCEPT_REGEX_PATTERN.match(line.strip())
     
     if accept_match:
-		acc_state = accept_match.group(1)
+        acc_state = accept_match.group(1)
     
     else:
-        edge_match = FSA_EDGE_REGEX_PATTERN.match(line)
+        edge_match = FST_EDGE_REGEX_PATTERN.match(line)
         curr = edge_match.group(1)
         next_node_code = edge_match.group(2)
-        in_char = edge_match.group(3)
-        out_char = edge_match.group(4)
+        in_word = edge_match.group(3)
+        out_word = edge_match.group(4)
  
         if edge_match.group(5):
             weight = edge_match.group(5)
         else:
             weight = 1
 
-		if curr not in node_dict:
+        if curr not in node_dict:
 
-			new_node = Node(curr)
-			node_dict[curr] = new_node
-			debugPrint("made " + str(new_node))
+            new_node = Node(curr)
+            node_dict[curr] = new_node
+            debugPrint("made " + str(new_node))
 
-			if acc_state is curr:
-				new_node.set_accept()
+            if acc_state is curr:
+                new_node.set_accept()
 
 
-		new_edge = Edge(in_char, next_node_code, weight, out_char)
-		node_dict[curr].adjacents.append(new_edge)
+        new_edge = Edge(in_word, next_node_code, weight, out_word)
+        node_dict[curr].adjacents.append(new_edge)
 
-		debugPrint("adjacents are  " + str(node_dict[curr].adjacents))
+        debugPrint("adjacents are  " + str(node_dict[curr].adjacents))
 
 
 fst_file.close()
@@ -137,26 +140,24 @@ infile = open(sys.argv[2], "r")
 
 for line in infile:
 
-	orig_line = line.strip("\n")
-	line = line.translate(None, '" ')
+    orig_line = line.strip("\n")
+    line = line.translate(None, '" ')
     inputs = line.split()
-    #length_line = len(line)
-    #num_states = len(node_dict.keys())
     dummy = Node("start")
     #trellis = [(node_dict[i]) = [] for i in node_dict.keys()]
     # makes an array of arrays named after the different states/nodes
-    trellis = [i = [] for i in node_dict.keys()]
+    trellis = [[] for i in node_dict.keys()]
 
     #probably should change char to word at some point
     #probably also need to adjust format of output (should it be a list?)
 
     curr_node = node_dict.itervalues().next()
-    curr_char = inputs[0]
+    curr_word = inputs[0]
     out_str = ""
     step = 0
 
     # first one:
-    trellis [0][0]: TrelSquare(1, dummy, "", curr_node, step)
+    trellis [0][0] = TrelSquare(1, dummy, "", curr_node, step)
     step += 1
 
     #trelsquare has prob, prevnode, outstr, destnode, step
@@ -174,16 +175,12 @@ for line in infile:
     #loop through steps/chars of line/columns in trellis (all ~equiv)
     while step < len(inputs):
 
-        curr_char = inputs[step-1]
+        curr_word = inputs[step-1]
         #loop through squares in curr column & fill out
         #list = [array[step] for array in trellis]
         #for square in list:
         j = 0
         while j < len(trellis):
-            max_prob = 0
-            max_owner = None
-            new_out = ""
-            old_out = ""
             curr_node = node_dict.items()[j]
 
             #loop through possible origin squares (prev column) to find max prob
@@ -196,7 +193,7 @@ for line in infile:
             #        old_out = origin_sq.out_str
             #        new_out = out
             (max_prob, max_owner, out_so_far) = find_max_prob(prev_col, curr_node, 
-            curr_char)
+            curr_word)
 
             trellis[j][step] = TrelSquare(max_prob, max_owner, out_so_far,
             curr_node, step)
