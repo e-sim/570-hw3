@@ -47,7 +47,7 @@ class TrelSquare:
         prob = 0
         new_out = ""
         for edge in self.state.adjacents:
-            if edge.dest = dest_node.name and edge.char = curr_char:
+            if edge.dest is dest_node.name and edge.char is curr_char:
                 prob = self.prob * edge.weight
                 new_out = edge.output
                 break
@@ -73,16 +73,15 @@ node_dict = collections.OrderedDict()
 
 for line in fst_file:
 
-#regex for each line of fsa file
+    #regex for each line of fsa file
 	FSA_ACCEPT_REGEX_PATTERN = re.compile(r"(\w+)$")
 	FSA_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \
         \"(\w*)\" \"(\w*)\" (\d(\.\d+)?)\)\)")
 	accept_match = FSA_ACCEPT_REGEX_PATTERN.match(line.strip())
-
-
+    
     if accept_match:
 		acc_state = accept_match.group(1)
-
+    
     else:
         edge_match = FSA_EDGE_REGEX_PATTERN.match(line)
         curr = edge_match.group(1)
@@ -122,7 +121,8 @@ for line in infile:
 
 	orig_line = line.strip("\n")
 	line = line.translate(None, '" ')
-    length_line = len(line)
+    inputs = line.split()
+    #length_line = len(line)
     #num_states = len(node_dict.keys())
     dummy = Node("start")
     #trellis = [(node_dict[i]) = [] for i in node_dict.keys()]
@@ -132,8 +132,8 @@ for line in infile:
     #first fill in the trellis 
     # while weight != 0?? <-- goes somewhere
 
-    curr_node = node_dict.keys().next()
-    curr_char = line[0]
+    curr_node = node_dict.itervalues().next()
+    curr_char = inputs[0]
     out_str = ""
     step = 0
 
@@ -157,27 +157,39 @@ for line in infile:
     # newout = self.find_prob[1]
 
     #loop through steps/chars of line/columns in trellis (all ~equiv)
-    while step < len(line):
+    while step < len(inputs):
 
-        list = [array[step] for array in trellis]
-        max_prob = 0
-        max_owner = None
-
+        curr_char = inputs[step-1]
         #loop through squares in curr column & fill out
-        for square in list:
+        #list = [array[step] for array in trellis]
+        #for square in list:
+        j = 0
+        while j < len(trellis):
+            max_prob = 0
+            max_owner = None
+            new_out = ""
+            old_out = ""
+            curr_node = node_dict.items()[j]
 
-
+            #loop through possible origin squares (prev column) to find max prob
             prev_col = [array[step-1] for array in trellis]
-            for origin in prev_col:
-                curr_prob = square.find_prob(curr_node, curr_char)
+            for origin_sq in prev_col:
+                (curr_prob, out) = origin_sq.find_prob(curr_node, curr_char)
                 if curr_prob > max_prob:
                     max_prob = curr_prob
-                    max_owner = curr_node
+                    max_owner = origin_sq.state
+                    old_out = origin_sq.out_str
+                    new_out = out
 
-
+            trellis[j][step] = TrelSquare(max_prob, max_owner, old_out + new_out,
+            curr_node, step)
+            j += 1
 
         step += 1
         
+        
+    #this executes when while condition becomes false    
+    #else:
 
 
     # note for later: %g makes human readable number format string = "%g" % prob
