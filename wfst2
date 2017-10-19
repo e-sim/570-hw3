@@ -7,4 +7,3 @@ S4
 (S2 (S3 "fish" "VERB" 0.3))
 (S3 (S4 "fish" "NOUN" 0.6))
 (S3 (S4 "can"  "NOUN" 0.4))
-
