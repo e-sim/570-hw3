@@ -1,7 +1,7 @@
 # Erica Sim
 # Ling 570 Autumn 2017
 # hw3
-# This program reads/builds (w)FSTs and provides the most likely 
+# This program reads/builds (w)FSTs and provides the most likely
 # path & output for a given input
 
 import sys
@@ -79,37 +79,36 @@ def find_final_prob(final_column):
 
 #### debug print
 DEBUGGING = False
-def debugPrint(text):
-    if (DEBUGGING):
+def debug_print(text):
+    if DEBUGGING:
         print(text)
         sys.stdout.flush()
 
 #### main program starts
 
-debugPrint("START PROGRAM")
+debug_print("START PROGRAM")
 
 
-fst_file = open(sys.argv[1], "r")
+FST_FILE = open(sys.argv[1], "r")
 node_dict = collections.OrderedDict()
 
-for line in fst_file:
+for line in FST_FILE:
 
     #regex for each line of fst file
     FST_ACCEPT_REGEX_PATTERN = re.compile(r"(\w+)$")
-    FST_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \
-        \"(\w*)\" \"(\w*)\" (\d(\.\d+)?)\)\)")
+    FST_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \"(\w*)\" \"(\w*)\" (\d(\.\d+)?)\)\)")
     accept_match = FST_ACCEPT_REGEX_PATTERN.match(line.strip())
-    
+
     if accept_match:
         acc_state = accept_match.group(1)
-    
+
     else:
         edge_match = FST_EDGE_REGEX_PATTERN.match(line)
         curr = edge_match.group(1)
         next_node_code = edge_match.group(2)
         in_word = edge_match.group(3)
         out_word = edge_match.group(4)
- 
+
         if edge_match.group(5):
             weight = edge_match.group(5)
         else:
@@ -119,7 +118,7 @@ for line in fst_file:
 
             new_node = Node(curr)
             node_dict[curr] = new_node
-            debugPrint("made " + str(new_node))
+            debug_print("made " + str(new_node))
 
             if acc_state is curr:
                 new_node.set_accept()
@@ -128,27 +127,24 @@ for line in fst_file:
         new_edge = Edge(in_word, next_node_code, weight, out_word)
         node_dict[curr].adjacents.append(new_edge)
 
-        debugPrint("adjacents are  " + str(node_dict[curr].adjacents))
+        debug_print("adjacents are  " + str(node_dict[curr].adjacents))
 
 
-fst_file.close()
+FST_FILE.close()
 
 
 # START NEW STUFF
 
-infile = open(sys.argv[2], "r")
+INFILE = open(sys.argv[2], "r")
 
-for line in infile:
+for line in INFILE:
 
     orig_line = line.strip("\n")
     line = line.translate(None, '" ')
     inputs = line.split()
     dummy = Node("start")
-    #trellis = [(node_dict[i]) = [] for i in node_dict.keys()]
-    # makes an array of arrays named after the different states/nodes
-    trellis = [[] for i in node_dict.keys()]
+    trellis = [[TrelSquare(0, dummy, "", None, -1) for x in range(len(inputs))] for i in node_dict.keys()]
 
-    #probably should change char to word at some point
     #probably also need to adjust format of output (should it be a list?)
 
     curr_node = node_dict.itervalues().next()
@@ -157,17 +153,12 @@ for line in infile:
     step = 0
 
     # first one:
-    trellis [0][0] = TrelSquare(1, dummy, "", curr_node, step)
+    trellis[0][0] = TrelSquare(1, dummy, "", curr_node, step)
     step += 1
 
     #trelsquare has prob, prevnode, outstr, destnode, step
- 
-    # the edges all have inchar, next node, weight, outchar, + a name 
-    
-    # go to the array named next node, #step cell
-    # prev node = curr node
-    # out_str = out_str + output
-    # prob = prob
+
+    # the edges all have inchar, next node, weight, outchar, + a name
 
     # prob = self.find_prob[0]
     # newout = self.find_prob[1]
@@ -192,11 +183,11 @@ for line in infile:
             #        max_owner = origin_sq.state
             #        old_out = origin_sq.out_str
             #        new_out = out
-            (max_prob, max_owner, out_so_far) = find_max_prob(prev_col, curr_node, 
-            curr_word)
+            (max_prob, max_owner, out_so_far) = find_max_prob(prev_col, curr_node,
+                                                              curr_word)
 
             trellis[j][step] = TrelSquare(max_prob, max_owner, out_so_far,
-            curr_node, step)
+                                          curr_node, step)
             j += 1
 
         step += 1
@@ -204,8 +195,8 @@ for line in infile:
     last_col = [array[len(inputs)-1] for array in trellis]
     (final_prob, output) = find_final_prob(last_col)
 
-    print(orig_line + " => " + output + " " + final_prob)
+    print(orig_line + " => " + output + " " + str(final_prob))
 
     # note for later: %g makes human readable number format string = "%g" % prob
 
-infile.close()
+INFILE.close()
