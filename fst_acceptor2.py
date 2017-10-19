@@ -54,6 +54,7 @@ class TrelSquare:
         return (prob, new_out)
 
 def find_max_prob(column, dest_node, curr_char):
+    max_prob = 0
     for origin_sq in column:
         (curr_prob, new_out) = origin_sq.find_prob(dest_node, curr_char)
         if curr_prob > max_prob:
@@ -62,6 +63,16 @@ def find_max_prob(column, dest_node, curr_char):
             output = origin_sq.out_str + new_out
 
     return (max_prob, max_owner, output)
+
+def find_final_prob(final_column):
+    final_prob = 0
+    for square in final_column:
+        if square.prob > final_prob and square.state.accept:
+            final_prob = square.prob
+            output = square.out_str
+
+    return (final_prob, output)
+
 
 #### debug print
 DEBUGGING = False
@@ -126,7 +137,7 @@ infile = open(sys.argv[2], "r")
 
 for line in infile:
 
-	#orig_line = line.strip("\n")
+	orig_line = line.strip("\n")
 	line = line.translate(None, '" ')
     inputs = line.split()
     #length_line = len(line)
@@ -192,10 +203,11 @@ for line in infile:
             j += 1
 
         step += 1
-        
-    #this executes when while condition becomes false    
-    #else:
 
+    last_col = [array[len(inputs)-1] for array in trellis]
+    (final_prob, output) = find_final_prob(last_col)
+
+    print(orig_line + " => " + output + " " + final_prob)
 
     # note for later: %g makes human readable number format string = "%g" % prob
 
