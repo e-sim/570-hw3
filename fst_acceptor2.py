@@ -52,18 +52,18 @@ class TrelSquare:
         if self.prev_state:
             prev_state = self.prev_state.name
         
-        return "|  SQUARE prob= " + str(self.prob) + " on step " + str(self.step) + " ||"
+        return "|  SQUARE prob= " + str(self.prob) + " on step " + str(self.step) + " for state " + str(self.state.name) if self.state else "NONE" + " |"
 
     def find_prob(self, dest_node, curr_word):
         #the probability of going to the destination node/state from this one
         prob = 0
         new_out = ""
-        if self.prob == 0 or not self.state:
+        if self.prob == 0.0 or not self.state:
             return (0, "")
         
         for edge in self.state.adjacents:
             debug_print("\t\t\tedge word: " + edge.in_word + " current word: " + curr_word)
-            debug_print("\t\t\tedge dest: " + edge.dest + " dest node: " + dest_node.name)
+            debug_print("\t\t\tedge dest: " + edge.dest + " dest node: " + curr_word)
             if edge.dest == dest_node.name and edge.in_word == curr_word:
                 new_prob = self.prob * float(edge.weight)
                 debug_print("\t\t\tprob: " + str(self.prob) + " edge weight: " + str(edge.weight))
@@ -102,12 +102,13 @@ def find_final_prob(final_column):
         if square.prob > final_prob and square.state.accept:
             final_prob = square.prob
             output = square.out_str
+            max_owner = square.state
 
     return (final_prob, output)
 
 
 #### debug print
-DEBUGGING = True
+DEBUGGING = False
 def debug_print(text):
     if DEBUGGING:
         print(text)
@@ -152,7 +153,17 @@ for line in FST_FILE:
             new_node = Node(curr)
             node_dict[curr] = new_node
             
-            if acc_state is curr:
+            if acc_state == curr:
+                new_node.set_accept()
+
+            debug_print("made " + str(new_node))
+
+        if next_node_code not in node_dict:
+
+            new_node = Node(next_node_code)
+            node_dict[next_node_code] = new_node
+            
+            if acc_state == next_node_code:
                 new_node.set_accept()
 
             debug_print("made " + str(new_node))
@@ -229,7 +240,7 @@ for line in INFILE:
 
         step += 1
 
-    #debug_print(trellis)
+    debug_print(trellis)
     last_col = [array[len(inputs)] for array in trellis]
     (final_prob, output) = find_final_prob(last_col)
 
