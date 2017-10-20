@@ -243,6 +243,8 @@ for line in INFILE:
     debug_print(trellis)
     last_col = [array[len(inputs)] for array in trellis]
     (final_prob, output) = find_final_prob(last_col)
+    if final_prob == 0.0:
+        output = "*none*"
 
     print(orig_line + " => " + output + " " + str(final_prob))
 
