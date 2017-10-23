@@ -1,14 +1,14 @@
 # Erica Sim
 # Ling 570 Autumn 2017
 # hw3
-# This program reads/builds (w)FSTs and provides the most likely
-# path & output for a given input
+'''This program reads/builds (w)FSTs and provides the most likely path & 
+output for a given input
+'''
 
 import sys
 import re
 import collections
 
-# stuff from last time
 
 class Edge:
 
@@ -55,8 +55,8 @@ class TrelSquare:
         return "|  SQUARE prob= " + str(self.prob) + " on step " + str(self.step) + " for state " + str(self.state.name) if self.state else "NONE" + " |"
 
     def find_prob(self, dest_node, curr_word):
-        #the probability of going to the destination node/state from this one
-        prob = 0
+        '''the probability of going to the destination node/state from this one'''
+        prob = 0.0
         new_out = ""
         if self.prob == 0.0 or not self.state:
             return (0, "")
@@ -70,12 +70,12 @@ class TrelSquare:
                 if new_prob > prob:
                     new_out = edge.output
                     prob = new_prob
-                    #should this be break?
                     continue
         return (prob, new_out)
 
+'''finds the maximum of all of the find_prob for the previous column (to current)'''
 def find_max_prob(column, dest_node, curr_word):
-    max_prob = 0
+    max_prob = 0.0
     max_owner = None
     output = ""
     for origin_sq in column:
@@ -95,8 +95,9 @@ def find_max_prob(column, dest_node, curr_word):
 
     return (max_prob, max_owner, output)
 
+'''for the very last one there aren't edges, so it needs a different find_prob method'''
 def find_final_prob(final_column):
-    final_prob = 0
+    final_prob = 0.0
     output = ""
     for square in final_column:
         if square.prob > final_prob and square.state.accept:
@@ -124,6 +125,7 @@ node_dict = collections.OrderedDict()
 
 for line in FST_FILE:
     line = line.rstrip()
+
     #regex for each line of fst file
     FST_ACCEPT_REGEX_PATTERN = re.compile(r"(\w+)$")
     FST_EDGE_REGEX_PATTERN = re.compile(r"\((\w+) \((\w+) \"(\w*)\" +\"(\w*)\" (\d(\.\d+))?\)\)")
@@ -134,9 +136,6 @@ for line in FST_FILE:
 
     else:
         edge_match = FST_EDGE_REGEX_PATTERN.match(line)
-
-        if not edge_match:
-            raise Exception("'{0}' is not a valid edge string".format(line))
 
         curr = edge_match.group(1)
         next_node_code = edge_match.group(2)
@@ -158,6 +157,7 @@ for line in FST_FILE:
 
             debug_print("made " + str(new_node))
 
+        #turns out you gotta make sure all destination nodes are made too
         if next_node_code not in node_dict:
 
             new_node = Node(next_node_code)
@@ -189,8 +189,6 @@ for line in INFILE:
     debug_print("length of dictionary: " + str(len(node_dict)))
     trellis = [[TrelSquare(0, dummy, "", None, -1) for x in range(len(inputs) + 1)] for i in range(len(node_dict))]
 
-    #probably also need to adjust format of output (should it be a list?)
-
     curr_node = node_dict.values()[0]
     curr_word = inputs[0]
     out_str = ""
@@ -200,33 +198,21 @@ for line in INFILE:
     trellis[0][step] = TrelSquare(1.0, dummy, "", curr_node, step)
     step += 1
 
-    #trelsquare has prob, prevnode, outstr, destnode, step
-
-    # the edges all have inchar, next node, weight, outchar, + a name
-
-    # prob = self.find_prob[0]
-    # newout = self.find_prob[1]
     debug_print("inputs are: " + str(inputs).translate(None, ))
     debug_print("length of input: " + str(len(inputs)))
 
     #loop through steps/chars of line/columns in trellis (all ~equiv)
     for curr_word in inputs:
-        debug_print("step is: " + str(step))
-        #curr_word = inputs[step-1]
-        #loop through squares in curr column & fill out
-        #list = [array[step] for array in trellis]
-        #for square in list:
+
         j = 0
         while j < len(trellis):
             curr_node = node_dict.values()[j]
             debug_print("dictionary: " + str(node_dict))
 
-            #loop through possible origin squares (prev column) to find max prob
-            #prev_col = [x[step-1] for x in trellis]
             prev_col = []
             for x in trellis:
                 prev_col.append(x[step-1])
-           # debug_print("prev column: {0}".format(prev_col))
+
             max_tup = find_max_prob(prev_col, curr_node, curr_word)
             debug_print(max_tup)
             max_prob = max_tup[0]
@@ -240,13 +226,13 @@ for line in INFILE:
 
         step += 1
 
-    debug_print(trellis)
     last_col = [array[len(inputs)] for array in trellis]
     (final_prob, output) = find_final_prob(last_col)
     if final_prob == 0.0:
         output = "*none*"
 
-    print(orig_line + " => " + output + " " + str(final_prob))
+    prob_str = "%g" % final_prob
+    print(orig_line + " => " + output + " " + prob_str)
 
     # note for later: %g makes human readable number format string = "%g" % prob
 
